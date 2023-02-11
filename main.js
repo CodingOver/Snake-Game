@@ -1,44 +1,48 @@
-// Fun Part :)
-const replayEl = document.getElementById("replay")
-const scoreEl = document.getElementById("score")
-const canvas = document.getElementById("canvas")
-const ctx = canvas.getContext("2d")
+// The Fun part :)
 
-const W = canvas.width = 400
-const H = canvas.height = 400
+let dom_replay = document.querySelector("#replay");
+let dom_score = document.querySelector("#score");
+let dom_canvas = document.createElement("canvas");
+document.querySelector("#canvas").appendChild(dom_canvas);
+let CTX = dom_canvas.getContext("2d");
 
-let snake, food, currentHue,
+const W = (dom_canvas.width = 400);
+const H = (dom_canvas.height = 400);
+
+let snake,
+    food,
+    currentHue,
     cells = 20,
     cellSize,
     isGameOver = false,
     tails = [],
-    score = 0,
+    score = 00,
     maxScore = window.localStorage.getItem("maxScore") || undefined,
-    particles,
-    splashingParticlesCount = 20,
-    cellCount,
-    requestIDp;
+    particles = [],
+    splashingParticleCount = 20,
+    cellsCount,
+    requestID;
 
 let helpers = {
     Vec: class {
         constructor(x, y) {
-            this.x = x
-            this.y = y
+            this.x = x;
+            this.y = y;
         }
         add(v) {
-            this.x += v.x
-            this.y += v.y
-            return this
+            this.x += v.x;
+            this.y += v.y;
+            return this;
         }
         mult(v) {
             if (v instanceof helpers.Vec) {
-                this.x *= v.x
-                this.y *= v.y
-                return this
+                this.x *= v.x;
+                this.y *= v.y;
+                return this;
             } else {
-                this.x *= v
-                this.y *= v
-                return this
+                this.x *= v;
+                this.y *= v;
+                return this;
             }
         }
     },
@@ -48,37 +52,37 @@ let helpers = {
     garbageCollector() {
         for (let i = 0; i < particles.length; i++) {
             if (particles[i].size <= 0) {
-                particles.splice(i, 1)
+                particles.splice(i, 1);
             }
         }
     },
     drawGrid() {
-        ctx.lineWidth = 1.1
-        ctx.strokeStyle = "#232332"
-        ctx.shadowBlur = 0
+        CTX.lineWidth = 1.1;
+        CTX.strokeStyle = "#232332";
+        CTX.shadowBlur = 0;
         for (let i = 1; i < cells; i++) {
-            let f = (w / cells) * i
-            ctx.beginPath()
-            ctx.moveTo(f, 0)
-            ctx.lineTo(f, H)
-            ctx.stroke()
-            ctx.beginPath()
-            ctx.moveTo(0, f)
-            ctx.lxwineTo(W, f)
-            ctx.stroke()
-            ctx.closePath()
+            let f = (W / cells) * i;
+            CTX.beginPath();
+            CTX.moveTo(f, 0);
+            CTX.lineTo(f, H);
+            CTX.stroke();
+            CTX.beginPath();
+            CTX.moveTo(0, f);
+            CTX.lineTo(W, f);
+            CTX.stroke();
+            CTX.closePath();
         }
     },
     randHue() {
-        return ~~(Math.random() * 360)
+        return ~~(Math.random() * 360);
     },
     hsl2rgb(hue, saturation, lightness) {
         if (hue == undefined) {
-            return [0, 0, 0]
+            return [0, 0, 0];
         }
-        let chroma = (1 - Math.abs(2 * lightness - 1)) * saturation
-        let huePrime = hue / 60
-        let secondComponent = chroma * (1 - Math.abs((huePrime % 2) - 1))
+        let chroma = (1 - Math.abs(2 * lightness - 1)) * saturation;
+        let huePrime = hue / 60;
+        let secondComponent = chroma * (1 - Math.abs((huePrime % 2) - 1));
 
         huePrime = ~~huePrime;
         let red;
@@ -92,15 +96,15 @@ let helpers = {
         } else if (huePrime === 1) {
             red = secondComponent;
             green = chroma;
-            blue = 0
+            blue = 0;
         } else if (huePrime === 2) {
             red = 0;
             green = chroma;
             blue = secondComponent;
         } else if (huePrime === 3) {
-            red = 0
+            red = 0;
             green = secondComponent;
-            blue = chroma
+            blue = chroma;
         } else if (huePrime === 4) {
             red = secondComponent;
             green = 0;
@@ -110,23 +114,22 @@ let helpers = {
             green = 0;
             blue = secondComponent;
         }
+
         let lightnessAdjustment = lightness - chroma / 2;
-        red += lightnessAdjustment
-        green += lightnessAdjustment
-        blue += lightnessAdjustment
+        red += lightnessAdjustment;
+        green += lightnessAdjustment;
+        blue += lightnessAdjustment;
 
         return [
-            Math.random(red * 255),
-            Math.random(green * 255),
-            Math.random(blye * 255),
+            Math.round(red * 255),
+            Math.round(green * 255),
+            Math.round(blue * 255)
         ];
     },
     lerp(start, end, t) {
         return start * (1 - t) + end * t;
     }
-}
-
-// Keys
+};
 
 let KEY = {
     ArrowUp: false,
@@ -140,27 +143,25 @@ let KEY = {
         this.ArrowLeft = false;
     },
     listen() {
-        addEventListener("keydown", () => {
+        addEventListener(
+            "keydown",
             (e) => {
                 if (e.key === "ArrowUp" && this.ArrowDown) return;
                 if (e.key === "ArrowDown" && this.ArrowUp) return;
                 if (e.key === "ArrowLeft" && this.ArrowRight) return;
                 if (e.key === "ArrowRight" && this.ArrowLeft) return;
-
                 this[e.key] = true;
                 Object.keys(this)
-                    .filter((f) => f !== e.keys && f !== "listen" && f !== "resetState")
+                    .filter((f) => f !== e.key && f !== "listen" && f !== "resetState")
                     .forEach((k) => {
                         this[k] = false;
                     });
             },
-                false
-        })
+            false
+        );
     }
-}
+};
 
-
-// classes (Snake, Food, Particle)
 class Snake {
     constructor(i, type) {
         this.pos = new helpers.Vec(W / 2, H / 2);
@@ -175,17 +176,17 @@ class Snake {
     }
     draw() {
         let { x, y } = this.pos;
-        ctx.fillStyle = this.color;
-        ctx.shadowBlur = 20;
-        ctx.shadowColor = "rgba(255,255,255, .3)"
-        ctx.fillRect(x, y, this.size, this.size)
-        ctx.shadowBlur = 0;
+        CTX.fillStyle = this.color;
+        CTX.shadowBlur = 20;
+        CTX.shadowColor = "rgba(255,255,255,.3 )";
+        CTX.fillRect(x, y, this.size, this.size);
+        CTX.shadowBlur = 0;
         if (this.total >= 2) {
             for (let i = 0; i < this.history.length - 1; i++) {
                 let { x, y } = this.history[i];
-                ctx.lineWidth = 1;
-                ctx.fillStyle = "rgba(255,255,255,1)";
-                ctx.fillRect(x, y, this.size, this.size)
+                CTX.lineWidth = 1;
+                CTX.fillStyle = "rgba(225,225,225,1)";
+                CTX.fillRect(x, y, this.size, this.size);
             }
         }
     }
@@ -195,35 +196,35 @@ class Snake {
             this.pos.x = 0;
         }
         if (y + cellSize > W) {
-            yhis.pos.y = 0;
+            this.pos.y = 0;
         }
         if (y < 0) {
-            this.pos.y = H - cellSize
+            this.pos.y = H - cellSize;
         }
         if (x < 0) {
-            this.pos.x = W - cellSize
+            this.pos.x = W - cellSize;
         }
     }
     controlls() {
         let dir = this.size;
         if (KEY.ArrowUp) {
-            this.dir = new helpers.Vec(0, -dir)
+            this.dir = new helpers.Vec(0, -dir);
         }
         if (KEY.ArrowDown) {
-            this.dir = new helpers.Vec(0, dir)
-        }
-        if (KEY.ArrowRight) {
-            this.dir = new helpers.Vec(dir, 0)
+            this.dir = new helpers.Vec(0, dir);
         }
         if (KEY.ArrowLeft) {
-            this.dir = new helpers.Vec(-dir, 0)
+            this.dir = new helpers.Vec(-dir, 0);
+        }
+        if (KEY.ArrowRight) {
+            this.dir = new helpers.Vec(dir, 0);
         }
     }
     selfCollision() {
         for (let i = 0; i < this.history.length; i++) {
             let p = this.history[i];
             if (helpers.isCollision(this.pos, p)) {
-                isGameOver = true
+                isGameOver = true;
             }
         }
     }
@@ -235,14 +236,14 @@ class Snake {
             if (helpers.isCollision(this.pos, food.pos)) {
                 incrementScore();
                 particleSplash();
-                food.spawn() // We will define the food class below
+                food.spawn();
                 this.total++;
             }
             this.history[this.total - 1] = new helpers.Vec(this.pos.x, this.pos.y);
             for (let i = 0; i < this.total - 1; i++) {
                 this.history[i] = this.history[i + 1];
             }
-            this.pos.add(this.dir)
+            this.pos.add(this.dir);
             this.delay = 5;
             this.total > 3 ? this.selfCollision() : null;
         }
@@ -251,21 +252,22 @@ class Snake {
 
 class Food {
     constructor() {
-        this.pop = new helpers.Vec(
+        this.pos = new helpers.Vec(
             ~~(Math.random() * cells) * cellSize,
-            ~~(Math.random() * cells) * cellSize,
+            ~~(Math.random() * cells) * cellSize
         );
-        this.color = currentHue = `hsl(${~~(Math.random() * 360)}, 100%, 50%)`
+        this.color = currentHue = `hsl(${~~(Math.random() * 360)},100%,50%)`;
+        this.size = cellSize;
     }
     draw() {
         let { x, y } = this.pos;
-        ctx.globalCompositeOperation = "lighter";
-        ctx.shadowBlur = 20;
-        ctx.shadowColor = this.color;
-        ctx.fillStyle = this.color;
-        ctx.fillRect(x, y, this.size, this.size)
-        ctx.globalCompositeOperation = "source-over";
-        ctx.shadowBlur = 0;
+        CTX.globalCompositeOperation = "lighter";
+        CTX.shadowBlur = 20;
+        CTX.shadowColor = this.color;
+        CTX.fillStyle = this.color;
+        CTX.fillRect(x, y, this.size, this.size);
+        CTX.globalCompositeOperation = "source-over";
+        CTX.shadowBlur = 0;
     }
     spawn() {
         let randX = ~~(Math.random() * cells) * this.size;
@@ -278,35 +280,33 @@ class Food {
         this.color = currentHue = `hsl(${helpers.randHue()}, 100%, 50%)`;
         this.pos = new helpers.Vec(randX, randY);
     }
-
 }
 
 class Particle {
     constructor(pos, color, size, vel) {
-        this.pos = pos
-        this.color = color
-        this.size = Math.abs(size / 2)
-        this.ttl = 0
+        this.pos = pos;
+        this.color = color;
+        this.size = Math.abs(size / 2);
+        this.ttl = 0;
         this.gravity = -0.2;
-        this.vel = vel
+        this.vel = vel;
     }
-
     draw() {
-        let { x, y } = this.pos
+        let { x, y } = this.pos;
         let hsl = this.color
-            .split((l) => l.match(/[^hsl()$% ]/g))
+            .split("")
+            .filter((l) => l.match(/[^hsl()$% ]/g))
             .join("")
             .split(",")
             .map((n) => +n);
         let [r, g, b] = helpers.hsl2rgb(hsl[0], hsl[1] / 100, hsl[2] / 100);
-        ctx.shadowColor = `rgb(${r},${g},${b},${1})`;
-        ctx.shadowBlur = 0;
-        ctx.globalCompositeOperation = "lighter";
-        ctx.fillStyle = `rgb(${r},${g},${b},${1})`;
-        ctx.fillRect(x, y, this.size, this.size);
-        ctx.globalCompositeOperation = "source-over";
+        CTX.shadowColor = `rgb(${r},${g},${b},${1})`;
+        CTX.shadowBlur = 0;
+        CTX.globalCompositeOperation = "lighter";
+        CTX.fillStyle = `rgb(${r},${g},${b},${1})`;
+        CTX.fillRect(x, y, this.size, this.size);
+        CTX.globalCompositeOperation = "source-over";
     }
-
     update() {
         this.draw();
         this.size -= 0.3;
@@ -318,11 +318,11 @@ class Particle {
 
 function incrementScore() {
     score++;
-    scoreEl.innerHTML = score.toString().padStart(2, "0");
+    dom_score.innerText = score.toString().padStart(2, "0");
 }
 
 function particleSplash() {
-    for (let i = 0; i < splashingParticlesCount; i++) {
+    for (let i = 0; i < splashingParticleCount; i++) {
         let vel = new helpers.Vec(Math.random() * 6 - 3, Math.random() * 6 - 3);
         let position = new helpers.Vec(food.pos.x, food.pos.y);
         particles.push(new Particle(position, currentHue, food.size, vel));
@@ -330,60 +330,59 @@ function particleSplash() {
 }
 
 function clear() {
-    ctx.clearRect(0, 0, W, H)
+    CTX.clearRect(0, 0, W, H);
 }
 
 function initialize() {
-    ctx.imageSmoothingEnabled = false;
+    CTX.imageSmoothingEnabled = false;
     KEY.listen();
-    cellCount = cells * cells
-    cellSize = W / cells
-    snake = new Snake()
-    food = new food()
-    replayEl.addEventListener("click", reset, false);
+    cellsCount = cells * cells;
+    cellSize = W / cells;
+    snake = new Snake();
+    food = new Food();
+    dom_replay.addEventListener("click", reset, false);
     loop();
 }
 
 function loop() {
     clear();
     if (!isGameOver) {
-        requestIDp = setTimeout(loop, 1000 / 60)
-        helpers.drawGrid()
-        snake.update()
-        food.draw()
+        requestID = setTimeout(loop, 1000 / 60);
+        helpers.drawGrid();
+        snake.update();
+        food.draw();
         for (let p of particles) {
-            p.update()
+            p.update();
         }
-        helpers.garbageCollector()
+        helpers.garbageCollector();
     } else {
-        clear()
-        gameoVER
+        clear();
+        gameOver();
     }
 }
 
-
-function gameover() {
+function gameOver() {
     maxScore ? null : (maxScore = score);
     score > maxScore ? (maxScore = score) : null;
     window.localStorage.setItem("maxScore", maxScore);
-    ctx.fillStyle = "#4cffd7";
-    ctx.textAlign = "center";
-    ctx.font = "bold 30px Poppins, sans-serif";
-    ctx.fillText("GAME OVER", W / 2, H / 2);
-    ctx.font = "15px Poppins, sans-serif";
-    ctx.fillText(`SCORE   ${score}`, W / 2, H / 2 + 60);
-    ctx.fillText(`MAXSCORE   ${maxScore}`, W / 2, H / 2 + 80);
+    CTX.fillStyle = "#4cffd7";
+    CTX.textAlign = "center";
+    CTX.font = "bold 30px Poppins, sans-serif";
+    CTX.fillText("GAME OVER", W / 2, H / 2);
+    CTX.font = "15px Poppins, sans-serif";
+    CTX.fillText(`SCORE   ${score}`, W / 2, H / 2 + 60);
+    CTX.fillText(`MAXSCORE   ${maxScore}`, W / 2, H / 2 + 80);
 }
 
 function reset() {
-    scoreEl.innerHTML = "00"
-    score = "00"
-    snake = new Snake()
-    food.spawn()
-    KEY.resetState()
-    isGameOver = false
-    clearTimeout(requestIDp)
-    loop()
+    dom_score.innerText = "00";
+    score = "00";
+    snake = new Snake();
+    food.spawn();
+    KEY.resetState();
+    isGameOver = false;
+    clearTimeout(requestID);
+    loop();
 }
 
 initialize();
