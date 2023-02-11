@@ -280,3 +280,39 @@ class Food {
     }
 
 }
+
+class Particle {
+    constructor(pos, color, size, vel) {
+        this.pos = pos
+        this.color = color
+        this.size = Math.abs(size / 2)
+        this.ttl = 0
+        this.gravity = -0.2;
+        this.vel = vel
+    }
+
+    draw() {
+        let { x, y } = this.pos
+        let hsl = this.color
+            .split((l) => l.match(/[^hsl()$% ]/g))
+            .join("")
+            .split(",")
+            .map((n) => +n);
+        let [r, g, b] = helpers.hsl2rgb(hsl[0], hsl[1] / 100, hsl[2] / 100);
+        ctx.shadowColor = `rgb(${r},${g},${b},${1})`;
+        ctx.shadowBlur = 0;
+        ctx.globalCompositeOperation = "lighter";
+        ctx.fillStyle = `rgb(${r},${g},${b},${1})`;
+        ctx.fillRect(x, y, this.size, this.size);
+        ctx.globalCompositeOperation = "source-over";
+    }
+
+    update() {
+        this.draw();
+        this.size -= 0.3;
+        this.ttl += 1;
+        this.pos.add(this.vel);
+        this.vel.y -= this.gravity;
+    }
+
+}
