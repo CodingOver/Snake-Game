@@ -320,3 +320,43 @@ function incrementScore() {
     score++;
     scoreEl.innerHTML = score.toString().padStart(2, "0");
 }
+
+function particleSplash() {
+    for (let i = 0; i < splashingParticlesCount; i++) {
+        let vel = new helpers.Vec(Math.random() * 6 - 3, Math.random() * 6 - 3);
+        let position = new helpers.Vec(food.pos.x, food.pos.y);
+        particles.push(new Particle(position, currentHue, food.size, vel));
+    }
+}
+
+function clear() {
+    ctx.clearRect(0, 0, W, H)
+}
+
+function initialize() {
+    ctx.imageSmoothingEnabled = false;
+    KEY.listen();
+    cellCount = cells * cells
+    cellSize = W / cells
+    snake = new Snake()
+    food = new food()
+    replayEl.addEventListener("click", reset, false);
+    loop();
+}
+
+function loop() {
+    clear();
+    if (!isGameOver) {
+        requestIDp = setTimeout(loop, 1000 / 60)
+        helpers.drawGrid()
+        snake.update()
+        food.draw()
+        for (let p of particles) {
+            p.update()
+        }
+        helpers.garbageCollector()
+    } else {
+        clear()
+        gameoVER
+    }
+}
