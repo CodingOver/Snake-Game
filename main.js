@@ -20,7 +20,7 @@ let snake, food, currentHue,
     requestIDp;
 
 let helpers = {
-    vec: class {
+    Vec: class {
         constructor(x, y) {
             this.x = x
             this.y = y
@@ -31,7 +31,7 @@ let helpers = {
             return this
         }
         mult(v) {
-            if (v instanceof helpers.vec) {
+            if (v instanceof helpers.Vec) {
                 this.x *= v.x
                 this.y *= v.y
                 return this
@@ -149,12 +149,102 @@ let KEY = {
 
                 this[e.key] = true;
                 Object.keys(this)
-                    .filter((f) => !== e.keys && f !== "listen" && f !== "resetState")
+                    .filter((f) => f !== e.keys && f !== "listen" && f !== "resetState")
                     .forEach((k) => {
                         this[k] = false;
                     });
             },
                 false
         })
+    }
+}
+
+
+// classes (Snake, Food, Particle)
+class Snake {
+    constructor(i, type) {
+        this.pos = new helpers.Vec(W / 2, H / 2);
+        this.dir = new helpers.Vec(0, 0);
+        this.type = type;
+        this.index = i;
+        this.delay = 5;
+        this.size = W / cells;
+        this.color = "white";
+        this.history = [];
+        this.total = 1;
+    }
+    draw() {
+        let { x, y } = this.pos;
+        ctx.fillStyle = this.color;
+        ctx.shadowBlur = 20;
+        ctx.shadowColor = "rgba(255,255,255, .3)"
+        ctx.fillRect(x, y, this.size, this.size)
+        ctx.shadowBlur = 0;
+        if (this.total >= 2) {
+            for (let i = 0; i < this.history.length - 1; i++) {
+                let { x, y } = this.history[i];
+                ctx.lineWidth = 1;
+                ctx.fillStyle = "rgba(255,255,255,1)";
+                ctx.fillRect(x, y, this.size, this.size)
+            }
+        }
+    }
+    walls() {
+        let { x, y } = this.pos;
+        if (x + cellSize > W) {
+            this.pos.x = 0;
+        }
+        if (y + cellSize > W) {
+            yhis.pos.y = 0;
+        }
+        if (y < 0) {
+            this.pos.y = H - cellSize
+        }
+        if (x < 0) {
+            this.pos.x = W - cellSize
+        }
+    }
+    controlls() {
+        let dir = this.size;
+        if (KEY.ArrowUp) {
+            this.dir = new helpers.Vec(0, -dir)
+        }
+        if (KEY.ArrowDown) {
+            this.dir = new helpers.Vec(0, dir)
+        }
+        if (KEY.ArrowRight) {
+            this.dir = new helpers.Vec(dir, 0)
+        }
+        if (KEY.ArrowLeft) {
+            this.dir = new helpers.Vec(-dir, 0)
+        }
+    }
+    selfCollision() {
+        for (let i = 0; i < this.history.length; i++) {
+            let p = this.history[i];
+            if (helpers.isCollision(this.pos, p)) {
+                isGameOver = true
+            }
+        }
+    }
+    update() {
+        this.walls();
+        this.draw();
+        this.controlls();
+        if (!this.delay--) {
+            if (helpers.isCollision(this.pos, food.pos)) {
+                incrementScore();
+                particleSplash();
+                food.spawn() // We will define the food class below
+                this.total++;
+            }
+            this.history[this.total - 1] = new helpers.Vec(this.pos.x, this.pos.y);
+            for (let i = 0; i < this.total - 1; i++) {
+                this.history[i] = this.history[i + 1];
+            }
+            this.pos.add(this.dir)
+            this.delay = 5;
+            this.total > 3 ? this.selfCollision() : null;
+        }
     }
 }
