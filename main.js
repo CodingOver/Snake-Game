@@ -366,11 +366,24 @@ function gameover() {
     maxScore ? null : (maxScore = score);
     score > maxScore ? (maxScore = score) : null;
     window.localStorage.setItem("maxScore", maxScore);
-    CTX.fillStyle = "#4cffd7";
-    CTX.textAlign = "center";
-    CTX.font = "bold 30px Poppins, sans-serif";
-    CTX.fillText("GAME OVER", W / 2, H / 2);
-    CTX.font = "15px Poppins, sans-serif";
-    CTX.fillText(`SCORE   ${score}`, W / 2, H / 2 + 60);
-    CTX.fillText(`MAXSCORE   ${maxScore}`, W / 2, H / 2 + 80);
+    ctx.fillStyle = "#4cffd7";
+    ctx.textAlign = "center";
+    ctx.font = "bold 30px Poppins, sans-serif";
+    ctx.fillText("GAME OVER", W / 2, H / 2);
+    ctx.font = "15px Poppins, sans-serif";
+    ctx.fillText(`SCORE   ${score}`, W / 2, H / 2 + 60);
+    ctx.fillText(`MAXSCORE   ${maxScore}`, W / 2, H / 2 + 80);
 }
+
+function reset() {
+    scoreEl.innerHTML = "00"
+    score = "00"
+    snake = new Snake()
+    food.spawn()
+    KEY.resetState()
+    isGameOver = false
+    clearTimeout(requestIDp)
+    loop()
+}
+
+initialize();
