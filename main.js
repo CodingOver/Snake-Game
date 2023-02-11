@@ -314,5 +314,9 @@ class Particle {
         this.pos.add(this.vel);
         this.vel.y -= this.gravity;
     }
+}
 
+function incrementScore() {
+    score++;
+    scoreEl.innerHTML = score.toString().padStart(2, "0");
 }
