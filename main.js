@@ -248,3 +248,35 @@ class Snake {
         }
     }
 }
+
+class Food {
+    constructor() {
+        this.pop = new helpers.Vec(
+            ~~(Math.random() * cells) * cellSize,
+            ~~(Math.random() * cells) * cellSize,
+        );
+        this.color = currentHue = `hsl(${~~(Math.random() * 360)}, 100%, 50%)`
+    }
+    draw() {
+        let { x, y } = this.pos;
+        ctx.globalCompositeOperation = "lighter";
+        ctx.shadowBlur = 20;
+        ctx.shadowColor = this.color;
+        ctx.fillStyle = this.color;
+        ctx.fillRect(x, y, this.size, this.size)
+        ctx.globalCompositeOperation = "source-over";
+        ctx.shadowBlur = 0;
+    }
+    spawn() {
+        let randX = ~~(Math.random() * cells) * this.size;
+        let randY = ~~(Math.random() * cells) * this.size;
+        for (let path of snake.history) {
+            if (helpers.isCollision(new helpers.Vec(randX, randY), path)) {
+                return this.spawn();
+            }
+        }
+        this.color = currentHue = `hsl(${helpers.randHue()}, 100%, 50%)`;
+        this.pos = new helpers.Vec(randX, randY);
+    }
+
+}
